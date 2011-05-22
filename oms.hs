@@ -168,7 +168,8 @@ extractSoln s = Soln {
       let strats = zip (elems (names s ! e)) (elems odds) in
       let goodStrats = [(n, o) | (Just n, o) <- strats] in
       let ot = sum $ map snd goodStrats in
-      [(n, o / ot) | (n, o) <- goodStrats]
+      let normStrats = [(n, o / ot) | (n, o) <- goodStrats] in
+      sortBy (comparing fst) normStrats
 
 main :: IO ()
 main = do
