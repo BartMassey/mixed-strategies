@@ -146,10 +146,33 @@ step s = do
   print s'
   return s'
 
+data Soln = Soln {
+  value :: Double,
+  leftStrategy, topStrategy :: [(Int, Double)] }
+
+instance Show Soln where
+  show soln =
+    printf "v = %g\n" (value soln) ++
+    printf "l = %s\n" (show (leftStrategy soln)) ++
+    printf "t = %s" (show (topStrategy soln))
+
+extractSoln :: Schema -> Soln
+extractSoln s = Soln {
+  value = offset s + d s / (ps ! ds),
+  leftStrategy = strat Bottom $ ixmap (1, nc - 1) (\j -> (nr, j)) ps,
+  topStrategy = strat Right $ ixmap (1, nr - 1) (\j -> (j, nc)) ps }
+  where
+    ps = payoffs s
+    ds@(nr, nc) = dims ps
+    strat e odds =
+      let strats = zip (elems (names s ! e)) (elems odds) in
+      let goodStrats = [(n, o) | (Just n, o) <- strats] in
+      let ot = sum $ map snd goodStrats in
+      [(n, o / ot) | (n, o) <- goodStrats]
+
 main :: IO ()
 main = do
   s0 <- readSchema
+  print s0
   s <- untilM solved step s0
-  let ps = payoffs s
-  print $ d s / (ps ! dims ps)
-    
+  print $ extractSoln s
