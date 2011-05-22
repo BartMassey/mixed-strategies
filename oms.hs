@@ -77,7 +77,8 @@ pivot s =
     ((pr, pc), pv) = 
         maximumBy pivotCompare $
         map (minimumBy pivotCompare) $
-        groupBy ((==) `on` (snd . fst)) potPivots
+        groupBy ((==) `on` (snd . fst)) $ 
+        sortBy (comparing (snd . fst)) potPivots
         where
           potPivots = 
             filter okPivot $ assocs ps
