@@ -7,17 +7,34 @@
 --   J.D. Williams. The Compleat Strategist. McGraw-Hill 1954. 
 
 import Data.Array
+import Text.Printf
 
 data Schema = Schema {
   offset :: Double,
   payoffs :: Array (Int, Int) Double,
   augr :: Array Int Double, 
   augc :: Array Int Double,
-  namer :: Array Int Double, 
-  namec :: Array Int Double,
+  namer :: Array Int Int,
+  namec :: Array Int Int,
   v :: Double,
   d :: Double
-} deriving Show
+}
+
+instance Show Schema where
+  show s =
+    printf "offset = %g, d = %g\n" (offset s) (d s) ++
+      "  " ++ printVec " %5d" (namec s) ++ "\n" ++
+      concatMap printRow [1..nr] ++
+      "  " ++ printVec " %5.2f" (augc s) ++ printf " %5.2f\n" (v s)
+    where
+      ((1, 1), (nr, nc)) = bounds $ payoffs s
+      printVec fmt a =
+        let (1, n) = bounds a in
+        concatMap (printf fmt . (a !)) [1..n]
+      printRow i =
+        printf "%2d" (namer s ! i) ++
+        printVec " %5.2f" (ixmap (1, nc) (\j -> (i, j)) (payoffs s)) ++
+        printf " %5.2f\n" (augr s ! i)
 
 readSchema :: IO Schema
 readSchema =
@@ -25,7 +42,7 @@ readSchema =
   where
     construct s = 
       let ps = checkPayoffs $ map (map read . words) $ lines s in
-      let ((1, nr), (1, nc)) = bounds ps in
+      let ((1, 1), (nr, nc)) = bounds ps in
       let o = minimum $ elems ps in
       let ps' = listArray ((1, 1), (nr, nc)) $ 
                 map (\x -> x - o) $ elems ps in
@@ -49,4 +66,3 @@ main :: IO ()
 main = do
   s0 <- readSchema
   print s0
-  
