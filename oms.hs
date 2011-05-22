@@ -87,7 +87,7 @@ pivot s =
   Schema {
     offset = offset s,
     d = pv,
-    names = names s,
+    names = updateNames,
     payoffs = updatePayoffs }
   where
     ps = payoffs s
@@ -108,6 +108,15 @@ pivot s =
             where
               pivotCriteria ((r, c), p) =
                 - (ps ! (nr, c)) * (ps ! (r, nc)) / p
+    updateNames = 
+      array (Left, Bottom) [
+        updateName Left Bottom pr pc,
+        updateName Bottom Left pc pr,
+        updateName Right Top pr pc,
+        updateName Top Right pc pr ]
+      where
+        updateName e e' i i' =
+          (e, (names s ! e) // [(i, names s ! e' ! i')])
     updatePayoffs = 
       listArray (bounds ps) $ map updatePayoff $ assocs $ ps
       where
