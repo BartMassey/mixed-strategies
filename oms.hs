@@ -23,18 +23,18 @@ data Schema = Schema {
 instance Show Schema where
   show s =
     printf "offset = %g, d = %g\n" (offset s) (d s) ++
-      "  " ++ printVec " %5d" (namec s) ++ "\n" ++
+      "   " ++ printVec " %6d" (namec s) ++ "\n" ++
       concatMap printRow [1 .. nr - 1] ++
-      "  " ++ printRowM nr
+      "   " ++ printRowM nr
     where
       ((1, 1), (nr, nc)) = bounds $ payoffs s
       printVec fmt a =
         let (1, n) = bounds a in
         concatMap (printf fmt . (a !)) [1..n]
       printRowM i =
-        printVec " %5.2f" (ixmap (1, nc) (\j -> (i, j)) (payoffs s))
+        printVec " %6.2f" (ixmap (1, nc) (\j -> (i, j)) (payoffs s))
       printRow i =
-        printf "%2d" (namer s ! i) ++ printRowM i ++ "\n"
+        printf " %2d" (namer s ! i) ++ printRowM i ++ "\n"
 
 readSchema :: IO Schema
 readSchema =
@@ -102,3 +102,4 @@ main :: IO ()
 main = do
   s0 <- readSchema
   print s0
+  print $ pivot s0
