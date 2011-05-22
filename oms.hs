@@ -6,43 +6,54 @@
 -- Follows the method of Chapter 6 of
 --   J.D. Williams. The Compleat Strategist. McGraw-Hill 1954. 
 
+import Prelude hiding (Left, Right)
 import Data.Array
 import Data.Function (on)
 import Data.List
 import Data.Ord (comparing)
 import Text.Printf
 
+data Edge = Left | Top | Right | Bottom deriving (Ord, Eq, Ix)
+
 data Schema = Schema {
   offset :: Double,
-  payoffs :: Array (Int, Int) Double,
-  namer :: Array Int Int,
-  namec :: Array Int Int,
-  d :: Double
+  d :: Double,
+  names :: Array Edge (Array Int (Maybe Int)),
+  payoffs :: Array (Int, Int) Double
 }
 
 instance Show Schema where
   show s =
-    printf "offset = %g, d = %g\n" (offset s) (d s) ++
-      "   " ++ printVec " %6d" (namec s) ++ "\n" ++
+    printf "O = %g, D = %g\n" (offset s) (d s) ++
+      printNameVec Top ++ "\n" ++
       concatMap printRow [1 .. nr - 1] ++
-      "   " ++ printRowM nr
+      "  " ++ printRowM nr ++ "\n" ++
+      printNameVec Bottom
     where
       ((1, 1), (nr, nc)) = bounds $ payoffs s
-      printVec fmt a =
-        let (1, n) = bounds a in
-        concatMap (printf fmt . (a !)) [1..n]
       printRowM i =
-        printVec " %6.2f" (ixmap (1, nc) (\j -> (i, j)) (payoffs s))
+        printVec $ ixmap (1, nc) (\j -> (i, j)) (payoffs s)
+        where
+          printVec a =
+            concatMap (printf " %6.2f" . (a !)) [1..n]
+            where
+              (1, n) = bounds a
+      printName e i =
+        case names s ! e ! i of
+          Just v -> printf "%2d" v
+          Nothing -> printf "  "
+      printNameVec e =
+        "  " ++ concatMap (("     " ++) . printName e) [1..n]
+        where
+          (1, n) = bounds (names s ! e)
       printRow i =
-        printf " %2d" (namer s ! i) ++ printRowM i ++ "\n"
+        printName Left i ++ printRowM i ++ " " ++ printName Right i ++ "\n"
 
 readSchema :: IO Schema
 readSchema =
   construct `fmap` getContents
   where
     construct s = 
-      let ps = checkPayoffs $ map (map read . words) $ lines s in
-      let ((1, 1), (nr, nc)) = bounds ps in
       let o = minimum $ elems ps in
       let core = map (\(c, x) -> (c, x - o)) $ assocs ps
           augr = zip (zip (repeat (nr + 1)) [1..nc]) (repeat (-1))
@@ -52,25 +63,32 @@ readSchema =
       let ps' = array bounds' $ core ++ augr ++ augc ++ [augv] in
       Schema {
         offset = o,
-        payoffs = ps',
-        namer = listArray (1, nr) $ take nr [1..],
-        namec = listArray (1, nc) $ take nc [1..],
-        d = 1 }
+        d = 1,
+        names = mkNames,
+        payoffs = ps' }
       where
-        checkPayoffs :: [[Double]] -> Array (Int, Int) Double
-        checkPayoffs l@(e : es)
+        ps = mkPayoffs $ map (map read . words) $ lines s
+        ((1, 1), (nr, nc)) = bounds ps
+        mkNames =
+          array (Left, Bottom) [namesLeft, namesTop, namesRight, namesBottom]
+          where
+            namesLeft = (Left, listArray (1, nr) [Just n | n <- [1..nr]])
+            namesTop = (Top, listArray (1, nc) [Just n | n <- [1..nc]])
+            namesRight = (Right, listArray (1, nr) (replicate nr Nothing))
+            namesBottom = (Bottom, listArray (1, nc) (replicate nc Nothing))
+        mkPayoffs :: [[Double]] -> Array (Int, Int) Double
+        mkPayoffs l@(e : es)
           | all ((== length e) . length) es =
               listArray ((1, 1), (length l, length e)) $ concat l
-        checkPayoffs _ = error "bad payoff matrix format"
+        mkPayoffs _ = error "bad payoff matrix format"
 
 pivot :: Schema -> Schema
 pivot s =
   Schema {
     offset = offset s,
-    payoffs = updatePayoffs,
-    namer = namer s,
-    namec = namec s,
-    d = pv }
+    d = pv,
+    names = names s,
+    payoffs = updatePayoffs }
   where
     ps = payoffs s
     ((1, 1), (nr, nc)) = bounds ps
