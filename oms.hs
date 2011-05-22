@@ -24,15 +24,17 @@ instance Show Schema where
   show s =
     printf "offset = %g, d = %g\n" (offset s) (d s) ++
       "  " ++ printVec " %5d" (namec s) ++ "\n" ++
-      unlines (map printRow [1..nr])
+      concatMap printRow [1 .. nr - 1] ++
+      "  " ++ printRowM nr
     where
       ((1, 1), (nr, nc)) = bounds $ payoffs s
       printVec fmt a =
         let (1, n) = bounds a in
         concatMap (printf fmt . (a !)) [1..n]
-      printRow i =
-        printf "%2d" (namer s ! i) ++
+      printRowM i =
         printVec " %5.2f" (ixmap (1, nc) (\j -> (i, j)) (payoffs s))
+      printRow i =
+        printf "%2d" (namer s ! i) ++ printRowM i ++ "\n"
 
 readSchema :: IO Schema
 readSchema =
@@ -43,8 +45,8 @@ readSchema =
       let ((1, 1), (nr, nc)) = bounds ps in
       let o = minimum $ elems ps in
       let core = map (\(c, x) -> (c, x - o)) $ assocs ps
-          augr = zip (zip (repeat nr) [1..nc]) (repeat (-1))
-          augc = zip (zip [1..nr] (repeat nc)) (repeat 1)
+          augr = zip (zip (repeat (nr + 1)) [1..nc]) (repeat (-1))
+          augc = zip (zip [1..nr] (repeat (nc + 1))) (repeat 1)
           augv = ((nr + 1, nc + 1), 0)
           bounds' = ((1, 1), (nr + 1, nc + 1)) in
       let ps' = array bounds' $ core ++ augr ++ augc ++ [augv] in
