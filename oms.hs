@@ -13,6 +13,12 @@ import Data.List
 import Data.Ord (comparing)
 import Text.Printf
 
+dim :: Array Int t -> Int
+dim a = let (1, ix) = bounds a in ix
+
+dims :: Array (Int, Int) t -> (Int, Int)
+dims a = let ((1, 1), ixs) = bounds a in ixs
+
 data Edge = Left | Top | Right | Bottom deriving (Ord, Eq, Ix)
 
 data Schema = Schema {
@@ -30,22 +36,21 @@ instance Show Schema where
       "  " ++ printRowM nr ++ "\n" ++
       printNameVec Bottom
     where
-      ((1, 1), (nr, nc)) = bounds $ payoffs s
+      (nr, nc) = dims $ payoffs s
       printRowM i =
         printVec $ ixmap (1, nc) (\j -> (i, j)) (payoffs s)
         where
           printVec a =
-            concatMap (printf " %6.2f" . (a !)) [1..n]
-            where
-              (1, n) = bounds a
+            concatMap (printf " %6.2f" . (a !)) [1 .. dim a]
       printName e i =
         case names s ! e ! i of
           Just v -> printf "%2d" v
           Nothing -> printf "  "
       printNameVec e =
-        "  " ++ concatMap (("     " ++) . printName e) [1..n]
+        "  " ++ concatMap print1 indiceses
         where
-          (1, n) = bounds (names s ! e)
+          print1 = (("     " ++) . printName e)
+          indiceses = [1 .. dim (names s ! e)]
       printRow i =
         printName Left i ++ printRowM i ++ " " ++ printName Right i ++ "\n"
 
@@ -68,7 +73,7 @@ readSchema =
         payoffs = ps' }
       where
         ps = mkPayoffs $ map (map read . words) $ lines s
-        ((1, 1), (nr, nc)) = bounds ps
+        (nr, nc) = dims ps
         mkNames =
           array (Left, Bottom) [namesLeft, namesTop, namesRight, namesBottom]
           where
@@ -91,7 +96,7 @@ pivot s =
     payoffs = updatePayoffs }
   where
     ps = payoffs s
-    ((1, 1), (nr, nc)) = bounds ps
+    (nr, nc) = dims ps
     ((pr, pc), pv) = 
         maximumBy pivotCompare $
         map (minimumBy pivotCompare) $
@@ -125,8 +130,26 @@ pivot s =
           | c == pc = -n
           | otherwise = (n * pv - (ps ! (pr, c)) * (ps ! (r, pc))) / d s
 
+untilM :: Monad m => (v -> Bool) -> (v -> m v) -> v -> m v
+untilM p _ v | p v = return v
+untilM p a v = a v >>= untilM p a
+
+solved :: Schema -> Bool
+solved s =
+  let ps = payoffs s in
+  let (nr, nc) = dims ps in
+  all (>= 0) [v | ((r, c), v) <- assocs ps, r == nr || c == nc]
+
+step :: Schema -> IO Schema
+step s = do
+  let s' = pivot s
+  print s'
+  return s'
+
 main :: IO ()
 main = do
   s0 <- readSchema
-  print s0
-  print $ pivot s0
+  s <- untilM solved step s0
+  let ps = payoffs s
+  print $ d s / (ps ! dims ps)
+    
