@@ -101,8 +101,7 @@ pivot s =
           potPivots = 
             filter okPivot $ assocs ps
             where
-              okPivot ((r, c), v) = 
-                r < nr && c < nc && v > 0 && (ps ! (nr, c)) < 0
+              okPivot ((_, c), v) = v > 0 && (ps ! (nr, c)) < 0
           pivotCompare =
             comparing pivotCriteria
             where
