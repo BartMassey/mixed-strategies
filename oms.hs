@@ -38,8 +38,8 @@ instance Show Schema where
           ["" : printRowM nr] ++
           ["" : printNameVec Bottom]
         in
-    printf "O = %g, D = %g\n" (offset s) (d s) ++
-    tabular ("r" ++ replicate (nc + 1) 'l') tab
+    printf "O = %.2f, D = %.2f\n" (offset s) (d s) ++
+    tabular (replicate (nc + 1) 'r' ++ "l") tab
     where
       (nr, nc) = dims $ payoffs s
       printRowM i =
@@ -49,7 +49,7 @@ instance Show Schema where
             map (printf "%.2f" . (a !)) [1 .. dim a]
       printName e i =
         case names s ! e ! i of
-          Just v -> printf "%2d" v
+          Just v -> printf "%d" v
           Nothing -> ""
       printNameVec e =
         map (printName e) [1 .. dim (names s ! e)]
@@ -156,7 +156,7 @@ data Soln = Soln {
 
 instance Show Soln where
   show soln =
-    printf "v = %g\n" (value soln) ++
+    printf "v = %.2f\n" (value soln) ++
     printf "l = %s\n" (show (leftStrategy soln)) ++
     printf "t = %s" (show (topStrategy soln))
 
