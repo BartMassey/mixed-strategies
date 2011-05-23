@@ -6,10 +6,11 @@
 -- Follows the method of Chapter 6 of
 --   J.D. Williams. The Compleat Strategist. McGraw-Hill 1954. 
 
-import Prelude hiding (Left, Right)
+import Prelude hiding (Left, Right, lookup)
 import Data.Array
 import Data.Function (on)
-import Data.List
+import Data.List hiding (lookup)
+import Data.Map (lookup, fromList)
 import Data.Ord (comparing)
 import Text.Printf
 
@@ -148,7 +149,7 @@ step s = do
 
 data Soln = Soln {
   value :: Double,
-  leftStrategy, topStrategy :: [(Int, Double)] }
+  leftStrategy, topStrategy :: [Double] }
 
 instance Show Soln where
   show soln =
@@ -166,10 +167,15 @@ extractSoln s = Soln {
     ds@(nr, nc) = dims ps
     strat e odds =
       let strats = zip (elems (names s ! e)) (elems odds) in
-      let goodStrats = [(n, o) | (Just n, o) <- strats] in
-      let ot = sum $ map snd goodStrats in
-      let normStrats = [(n, o / ot) | (n, o) <- goodStrats] in
-      sortBy (comparing fst) normStrats
+      let mStrats = fromList [(nm, pr) | (Just nm, pr) <- strats] in
+      let vStrats = map (zeroInactive mStrats) [1 .. dim odds] in
+      [o / sum vStrats | o <- vStrats]
+      where
+        zeroInactive m nm =
+          case lookup nm m of
+            Just o -> o
+            Nothing -> 0
+
 
 main :: IO ()
 main = do
