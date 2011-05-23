@@ -12,7 +12,8 @@ module OptimalMixedStrategy (
   pivot, 
   Soln(..), 
   extractSoln, 
-  solved
+  solved,
+  solve
 ) where
 
 import Prelude hiding (Left, Right, lookup)
@@ -178,3 +179,8 @@ solved s =
   let ps = payoffs s in
   let ((1,1), (nr, nc)) = bounds ps in
   all (>= 0) [v | ((r, c), v) <- assocs ps, r == nr || c == nc]
+
+solve :: Schema -> Soln
+solve s
+  | solved s = extractSoln s
+  | otherwise = solve (pivot s)
