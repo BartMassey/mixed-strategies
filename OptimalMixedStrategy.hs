@@ -7,7 +7,12 @@
 -- 1954).
 
 module OptimalMixedStrategy (
-  Schema(..), readSchema, pivot, Soln(..), extractSoln
+  Schema(..), 
+  readSchema, 
+  pivot, 
+  Soln(..), 
+  extractSoln, 
+  solved
 ) where
 
 import Prelude hiding (Left, Right, lookup)
@@ -149,7 +154,7 @@ instance Show Soln where
     printf "t = %s" (show (topStrategy soln))
 
 extractSoln :: Schema -> Soln
-extractSoln s = Soln {
+extractSoln s | solved s = Soln {
   value = offset s + d s / (ps ! ds),
   leftStrategy = strat Bottom $ ixmap (1, nc - 1) (\j -> (nr, j)) ps,
   topStrategy = strat Right $ ixmap (1, nr - 1) (\j -> (j, nc)) ps }
@@ -166,3 +171,10 @@ extractSoln s = Soln {
           case lookup nm m of
             Just o -> o
             Nothing -> 0
+extractSoln _ = error "refusing to extract solution from unsolved schema"
+
+solved :: Schema -> Bool
+solved s =
+  let ps = payoffs s in
+  let ((1,1), (nr, nc)) = bounds ps in
+  all (>= 0) [v | ((r, c), v) <- assocs ps, r == nr || c == nc]
