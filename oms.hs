@@ -32,12 +32,14 @@ data Schema = Schema {
 
 instance Show Schema where
   show s =
+    let tab =       
+          ["" : printNameVec Top] ++
+          map printRow [1 .. nr - 1] ++
+          ["" : printRowM nr] ++
+          ["" : printNameVec Bottom]
+        in
     printf "O = %g, D = %g\n" (offset s) (d s) ++
-    tabular ("r" ++ replicate (nc + 1) 'l') $
-      ["" : printNameVec Top] ++
-      map printRow [1 .. nr - 1] ++
-      ["" : printRowM nr] ++
-      ["" : printNameVec Bottom]
+    tabular ("r" ++ replicate (nc + 1) 'l') tab
     where
       (nr, nc) = dims $ payoffs s
       printRowM i =
