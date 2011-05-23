@@ -13,7 +13,7 @@ import Data.List hiding (lookup)
 import Data.Map (lookup, fromList)
 import Data.Ord (comparing)
 import Text.Printf
-import Text.Tabular
+import Text.SimpleTabular
 
 dim :: Array Int t -> Int
 dim a = let (1, ix) = bounds a in ix

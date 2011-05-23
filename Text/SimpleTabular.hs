@@ -1,8 +1,11 @@
 -- Copyright © 2011 Bart Massey
 
--- | Format fields in a tabular fashion.
+-- | Format fields in a tabular fashion. This is not
+--   nearly as sophisticated as the "tabular" package
+--   on hackage (http://hackage.haskell.org/package/tabular),
+--   but may be simpler to use and extend.
 
-module Text.Tabular (tabular)
+module Text.SimpleTabular (tabular)
 where
 
 import Data.List
