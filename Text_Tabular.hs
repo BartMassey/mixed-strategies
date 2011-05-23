@@ -1,12 +1,20 @@
 -- Copyright © 2011 Bart Massey
 
-module Text.Tabular
+-- | Format fields in a tabular fashion.
+
+module Text.Tabular (tabular)
 where
 
 import Data.List
 
--- | Format fields in a tabular fashion.
-
+-- | Given a format string whose characters are 'l', 'r' and
+--   'c' for left-justified, right-justified and centered
+--   columns, and a list of rows, each row consisting of
+--   columns of strings to be formatted, emit a
+--   properly-formatted matrix. Short rows will be padded to
+--   the size of the longest row with empty strings before
+--   the data is applied to the format string, at which
+--   point the number of columns per row must match.
 tabular :: String -> [[String]] -> String
 tabular fmt tableau =
   let rawCols = 

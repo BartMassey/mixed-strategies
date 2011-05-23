@@ -13,6 +13,7 @@ import Data.List hiding (lookup)
 import Data.Map (lookup, fromList)
 import Data.Ord (comparing)
 import Text.Printf
+import Text.Tabular
 
 dim :: Array Int t -> Int
 dim a = let (1, ix) = bounds a in ix
@@ -32,28 +33,28 @@ data Schema = Schema {
 instance Show Schema where
   show s =
     printf "O = %g, D = %g\n" (offset s) (d s) ++
-      printNameVec Top ++ "\n" ++
-      concatMap printRow [1 .. nr - 1] ++
-      "  " ++ printRowM nr ++ "\n" ++
-      printNameVec Bottom
+    tabular ("r" ++ replicate (nc + 1) 'l') $
+      ["" : printNameVec Top] ++
+      map printRow [1 .. nr - 1] ++
+      ["" : printRowM nr] ++
+      ["" : printNameVec Bottom]
     where
       (nr, nc) = dims $ payoffs s
       printRowM i =
         printVec $ ixmap (1, nc) (\j -> (i, j)) (payoffs s)
         where
           printVec a =
-            concatMap (printf " %6.2f" . (a !)) [1 .. dim a]
+            map (printf "%.2f" . (a !)) [1 .. dim a]
       printName e i =
         case names s ! e ! i of
           Just v -> printf "%2d" v
-          Nothing -> printf "  "
+          Nothing -> ""
       printNameVec e =
-        "  " ++ concatMap print1 indiceses
-        where
-          print1 = (("     " ++) . printName e)
-          indiceses = [1 .. dim (names s ! e)]
+        map (printName e) [1 .. dim (names s ! e)]
       printRow i =
-        printName Left i ++ printRowM i ++ " " ++ printName Right i ++ "\n"
+        [printName Left i] ++ 
+        printRowM i ++ 
+        [printName Right i]
 
 readSchema :: IO Schema
 readSchema =
