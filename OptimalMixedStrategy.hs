@@ -153,9 +153,13 @@ data Soln = Soln {
 
 instance Show Soln where
   show soln =
-    printf "v = %.2f\n" (value soln) ++
-    printf "l = %s\n" (show (leftStrategy soln)) ++
-    printf "t = %s" (show (topStrategy soln))
+    printf "value = %.2f\n" (value soln) ++
+    printf "leftmax = %s\n" (showStrategy leftStrategy) ++
+    printf "topmin = %s" (showStrategy topStrategy)
+    where
+      showStrategy strat =
+        unwords $ map (uncurry (printf "%d:%.2f")) $ 
+        zip [(1::Int)..] $ strat soln
 
 extractSoln :: Schema -> Soln
 extractSoln s | solved s = Soln {
