@@ -9,7 +9,7 @@
 -- J.D. Williams' "The Compleat Strategyst" (McGraw-Hill
 -- 1954).
 
-module OptimalMixedStrategy (
+module Data.MixedStrategies (
   Schema(..), 
   readSchema, 
   pivot, 

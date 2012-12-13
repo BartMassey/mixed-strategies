@@ -3,7 +3,7 @@
 -- Please see the file COPYING in the source
 -- distribution of this software for license terms.
 
-import OptimalMixedStrategy
+import Data.MixedStrategies
 
 untilM :: Monad m => (v -> Bool) -> (v -> m v) -> v -> m v
 untilM p _ v | p v = return v
