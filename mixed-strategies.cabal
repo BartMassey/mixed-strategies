@@ -31,7 +31,7 @@ homepage:            http://wiki.cs.pdx.edu/bartforge/oms
 license:             MIT
 
 -- The file containing the license text.
-license-file:        LICENSE
+license-file:        COPYING
 
 -- The package author(s).
 author:              Bart Massey
