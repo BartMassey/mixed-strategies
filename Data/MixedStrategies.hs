@@ -14,6 +14,7 @@
 
 module Data.MixedStrategies (
   Schema(..), 
+  Edge(..),
   readSchema, 
   pivot, 
   Solution(..), 
@@ -37,6 +38,7 @@ dim a = let (1, ix) = bounds a in ix
 dims :: Array (Int, Int) t -> (Int, Int)
 dims a = let ((1, 1), ixs) = bounds a in ixs
 
+-- | An 'Edge' of a 'Schema' contains annotations of the Schema.
 data Edge = Left | Top | Right | Bottom deriving (Ord, Eq, Ix)
 
 -- | Schema describing a two-player hidden information game.
@@ -45,7 +47,7 @@ data Schema = Schema {
   offset :: Double,
   -- | \"Determinant\".
   d :: Double,
-  -- | Strategy "names", given as labels along an edge of the
+  -- | Strategy \"names\", given as labels along an edge of the
   -- payoff matrix.
   names :: Array Edge (Array Int (Maybe Int)),
   -- | Payoff matrix.
