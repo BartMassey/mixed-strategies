@@ -6,15 +6,18 @@
 -- | Calculate an optimal mixed strategy given the payoff
 -- matrix of a two-player zero-sum single-round iterated
 -- simultaneous game.  Follows the method of Chapter 6 of
--- J.D. Williams' "The Compleat Strategyst" (McGraw-Hill
--- 1954).
+-- J.D. Williams' \"The Compleat Strategyst\" (McGraw-Hill
+-- 1954). Throughout, the player playing the rows (strategies
+-- on the left) is assumed to be the \"maximizer\" and the
+-- player playing the columns (strategies on top) is assumed
+-- to be the \"minimizer\".
 
 module Data.MixedStrategies (
   Schema(..), 
   readSchema, 
   pivot, 
-  Soln(..), 
-  extractSoln, 
+  Solution(..), 
+  extractSolution, 
   solved,
   solve
 ) where
@@ -36,13 +39,20 @@ dims a = let ((1, 1), ixs) = bounds a in ixs
 
 data Edge = Left | Top | Right | Bottom deriving (Ord, Eq, Ix)
 
+-- | Schema describing a two-player hidden information game.
 data Schema = Schema {
+  -- | Score offset to make the game fair.
   offset :: Double,
+  -- | \"Determinant\".
   d :: Double,
+  -- | Strategy "names", given as labels along an edge of the
+  -- payoff matrix.
   names :: Array Edge (Array Int (Maybe Int)),
+  -- | Payoff matrix.
   payoffs :: Array (Int, Int) Double
 }
 
+-- | Show a 'Schema' in tabular format.
 instance Show Schema where
   show s =
     let tab =       
@@ -71,6 +81,7 @@ instance Show Schema where
         printRowM i ++ 
         [printName Right i]
 
+-- | Read a 'Schema' (actually a payoff matrix) from standard input.
 readSchema :: IO Schema
 readSchema =
   construct `fmap` getContents
@@ -104,6 +115,7 @@ readSchema =
               listArray ((1, 1), (length l, length e)) $ concat l
         mkPayoffs _ = error "bad payoff matrix format"
 
+-- | Execute one pivot step in the 'Schema' reduction.
 pivot :: Schema -> Schema
 pivot s =
   Schema {
@@ -147,11 +159,13 @@ pivot s =
           | c == pc = -n
           | otherwise = (n * pv - (ps ! (pr, c)) * (ps ! (r, pc))) / d s
 
-data Soln = Soln {
+-- | A game solution, given as the value of the game and
+-- an optimal mixed strategy for each player.
+data Solution = Solution {
   value :: Double,
   leftStrategy, topStrategy :: [Double] }
 
-instance Show Soln where
+instance Show Solution where
   show soln =
     printf "value = %.2f\n" (value soln) ++
     printf "leftmax = %s\n" (showStrategy leftStrategy) ++
@@ -161,8 +175,10 @@ instance Show Soln where
         unwords $ map (uncurry (printf "%d:%.2f")) $ 
         zip [(1::Int)..] $ strat soln
 
-extractSoln :: Schema -> Soln
-extractSoln s | solved s = Soln {
+-- | Given a solved 'Schema', extract the 'Solution'
+-- implied by that 'Schema'.
+extractSolution :: Schema -> Solution
+extractSolution s | solved s = Solution {
   value = offset s + d s / (ps ! ds),
   leftStrategy = strat Bottom $ ixmap (1, nc - 1) (\j -> (nr, j)) ps,
   topStrategy = strat Right $ ixmap (1, nr - 1) (\j -> (j, nc)) ps }
@@ -179,15 +195,20 @@ extractSoln s | solved s = Soln {
           case lookup nm m of
             Just o -> o
             Nothing -> 0
-extractSoln _ = error "refusing to extract solution from unsolved schema"
+extractSolution _ = error "refusing to extract solution from unsolved schema"
 
+-- | Returns 'True' if the given 'Schema' is fully reduced (\"solved\");
+-- 'False' otherwise.
 solved :: Schema -> Bool
 solved s =
   let ps = payoffs s in
   let ((1,1), (nr, nc)) = bounds ps in
   all (>= 0) [v | ((r, c), v) <- assocs ps, r == nr || c == nc]
 
-solve :: Schema -> Soln
+-- | Keep reducing the given 'Schema' until a fixed
+-- point is reached, and then return the corresponding
+-- 'Solution'.
+solve :: Schema -> Solution
 solve s
-  | solved s = extractSoln s
+  | solved s = extractSolution s
   | otherwise = solve (pivot s)

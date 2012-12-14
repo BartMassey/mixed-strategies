@@ -20,4 +20,4 @@ main = do
   s0 <- readSchema
   print s0
   s <- untilM solved step s0
-  print $ extractSoln s
+  print $ extractSolution s
